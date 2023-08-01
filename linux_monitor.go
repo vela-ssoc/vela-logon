@@ -72,7 +72,7 @@ func (m *Monitor) InvalidUsername(s [][]byte) *Event {
 		Addr:    auxlib.B2S(s[12]),
 		Device:  "ps/0",
 		Process: exe,
-		Pid:     pid,
+		Pid:     int32(pid),
 		Class:   m.cfg.class,
 		Time:    Convert2Time(s[0], s[1], s[2]),
 	}
@@ -84,7 +84,7 @@ func (m *Monitor) InvalidPassword(s [][]byte) *Event {
 		Addr:    auxlib.B2S(s[10]),
 		Device:  "ps/0",
 		Process: exe,
-		Pid:     pid,
+		Pid:     int32(pid),
 		Class:   m.cfg.class,
 		Time:    Convert2Time(s[0], s[1], s[2]),
 	}

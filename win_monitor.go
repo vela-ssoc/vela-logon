@@ -5,8 +5,8 @@ package logon
 
 import (
 	"fmt"
-	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-evtlog/watch"
+	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
@@ -46,12 +46,12 @@ func Logon2Event(evt *watch.WinLogEvent) *Event {
 		User:     v.Have("TargetUserName"),
 		Device:   v.Have("TargetDomainName"),
 		Host:     evt.ComputerName,
-		Pid:      int(evt.ProcessId),
+		Pid:      int32(evt.ProcessId),
 		Process:  v.Have("ProcessName"),
 	}
 }
 
-func (m *Monitor) historyHandle(ev *Event, pip *pipe.Px) {
+func (m *Monitor) historyHandle(ev *Event, pip *pipe.Chains) {
 	if ev == nil {
 		return
 	}
@@ -125,7 +125,7 @@ func (m *Monitor) toLogonEvent(evt *watch.WinLogEvent) *Event {
 		User:     v.Have("TargetUserName"),
 		Device:   v.Have("TargetDomainName"),
 		Host:     evt.ComputerName,
-		Pid:      int(evt.ProcessId),
+		Pid:      int32(evt.ProcessId),
 		Process:  v.Have("ProcessName"),
 	}
 }

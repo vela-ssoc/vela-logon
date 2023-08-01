@@ -84,7 +84,7 @@ func (u *Utmp) Event(class string) *Event {
 		Addr:     u.Addr().String(),
 		Time:     tv,
 		Class:    class,
-		Pid:      int(u.Pid),
+		Pid:      int32(u.Pid),
 		Typ:      strconv.Itoa(int(u.Type)),
 	}
 }

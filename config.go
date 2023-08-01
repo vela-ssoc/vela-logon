@@ -16,7 +16,7 @@ type config struct {
 	ignore *cond.Ignore
 	filter *cond.Combine
 	output lua.Writer
-	pipe   *pipe.Px
+	pipe   *pipe.Chains
 	ref    bool
 }
 

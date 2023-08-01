@@ -21,7 +21,7 @@ type Event struct {
 	Port     int       `json:"port"`
 	User     string    `json:"user"`
 	Host     string    `json:"host"`
-	Pid      int       `json:"pid"`
+	Pid      int32     `json:"pid"`
 	Device   string    `json:"device"`
 	Process  string    `json:"process"`
 	Typ      string    `json:"type"` //linux type field

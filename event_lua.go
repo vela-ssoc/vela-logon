@@ -1,9 +1,8 @@
 package logon
 
 import (
-	"github.com/bytedance/sonic"
+	"encoding/json"
 	"github.com/vela-ssoc/vela-kit/lua"
-	"github.com/vela-ssoc/vela-kit/opcode"
 	risk "github.com/vela-ssoc/vela-risk"
 	vtime "github.com/vela-ssoc/vela-time"
 )
@@ -18,7 +17,7 @@ func (ev *Event) Peek() lua.LValue                       { return ev }
 func (ev *Event) Byte() []byte {
 	ev.MinionID = xEnv.ID()
 	ev.Inet = xEnv.Inet()
-	chunk, err := sonic.Marshal(ev)
+	chunk, err := json.Marshal(ev)
 	if err != nil {
 		return nil
 	}
@@ -26,7 +25,7 @@ func (ev *Event) Byte() []byte {
 }
 
 func (ev *Event) reportL(L *lua.LState) int {
-	err := xEnv.TnlSend(opcode.OpLogon, ev)
+	err := xEnv.Push("/api/v1/broker/collect/agent/logon", ev)
 	if err != nil {
 		xEnv.Debugf("logon event report fail %v data:%v", err, ev)
 	}
@@ -66,9 +65,9 @@ func (ev *Event) Index(L *lua.LState, key string) lua.LValue {
 		return lua.S2L(ev.Typ)
 	case "risk":
 		return lua.NewFunction(ev.riskL)
-
 	case "report":
 		return lua.NewFunction(ev.reportL)
 	}
+
 	return lua.LNil
 }

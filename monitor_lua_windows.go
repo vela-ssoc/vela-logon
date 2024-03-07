@@ -1,14 +1,11 @@
-//go:build windows
-// +build windows
-
 package logon
 
 import (
-	"github.com/vela-ssoc/vela-kit/audit"
 	cond "github.com/vela-ssoc/vela-cond"
-	"github.com/vela-ssoc/vela-evtlog/watch"
+	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
+	"github.com/vela-ssoc/vela-kit/windows/evtx"
 	"time"
 )
 
@@ -19,7 +16,7 @@ func (m *Monitor) startL(L *lua.LState) int {
 
 func (m *Monitor) historyL(L *lua.LState) int {
 	pip := pipe.NewByLua(L)
-	w, e := watch.New()
+	w, e := evtx.NewWatcher()
 	if e != nil {
 		audit.Errorf("windows %s history search fail %v", m.cfg.path, e).From(L.CodeVM()).Put()
 		return 0

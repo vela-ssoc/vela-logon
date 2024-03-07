@@ -8,7 +8,7 @@ import (
 var xEnv vela.Environment
 
 /*
-	local f = vela.logon.fail()
+	local f = vela.logon.fail() //object
 	f.ignore("xxx")
 	f.pipe()
 	f.start()

@@ -41,7 +41,7 @@ func (cfg *config) handle(ev *Event) {
 		cfg.output.Write(ev.Byte())
 	}
 
-	cfg.pipe.Do(ev, cfg.co, func(err error) {
+	cfg.pipe.Do(ev, cfg.co, func(err error) { //a.pipe(function(index , value) end)
 		xEnv.Errorf("%s login Monitor pipe call fail %v", cfg.class, err)
 	})
 }

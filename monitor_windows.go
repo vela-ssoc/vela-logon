@@ -1,15 +1,12 @@
-//go:build windows
-// +build windows
-
 package logon
 
 import (
 	"fmt"
-	"github.com/vela-ssoc/vela-evtlog/watch"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/auxlib"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
+	"github.com/vela-ssoc/vela-kit/windows/evtx"
 	"gopkg.in/tomb.v2"
 	"reflect"
 	"sync/atomic"
@@ -26,11 +23,11 @@ type Monitor struct {
 	bkt     []string
 	begin   bool
 	tomb    *tomb.Tomb
-	watch   *watch.WinLogWatcher
-	history *watch.WinLogWatcher
+	watch   *evtx.WinLogWatcher
+	history *evtx.WinLogWatcher
 }
 
-func Logon2Event(evt *watch.WinLogEvent) *Event {
+func Logon2Event(evt *evtx.WinLogEvent) *Event {
 	v, err := evt.EvData()
 	if err != nil {
 		xEnv.Errorf("%s convert to event data fail %v", err)
@@ -94,7 +91,7 @@ func (m *Monitor) subscribe(name, query string) (err error) {
 	return
 }
 
-func (m *Monitor) bookmark(evt *watch.WinLogEvent) {
+func (m *Monitor) bookmark(evt *evtx.WinLogEvent) {
 	if len(m.bkt) == 0 {
 		return
 	}
@@ -109,7 +106,7 @@ func (m *Monitor) bookmark(evt *watch.WinLogEvent) {
 	}
 }
 
-func (m *Monitor) toLogonEvent(evt *watch.WinLogEvent) *Event {
+func (m *Monitor) toLogonEvent(evt *evtx.WinLogEvent) *Event {
 	v, err := evt.EvData()
 	if err != nil {
 		xEnv.Errorf("%s convert to event data fail %v", m.Name(), err)
@@ -161,7 +158,7 @@ func (m *Monitor) Type() string {
 }
 
 func (m *Monitor) Start() (err error) {
-	w, e := watch.New()
+	w, e := evtx.NewWatcher()
 	if e != nil {
 		return e
 	}

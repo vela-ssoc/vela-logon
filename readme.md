@@ -57,6 +57,8 @@
 ```lua
     local f = vela.logon.fail()
     f.pipe(function(ev)
+        ev.exdata("aaa")
+        ev.exdata("bbb")
         print(ev.user , " " , ev.addr)
         ev.report()
     end)

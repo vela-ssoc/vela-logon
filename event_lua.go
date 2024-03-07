@@ -5,6 +5,7 @@ import (
 	"github.com/vela-ssoc/vela-kit/lua"
 	risk "github.com/vela-ssoc/vela-risk"
 	vtime "github.com/vela-ssoc/vela-time"
+	"runtime"
 )
 
 func (ev *Event) String() string                         { return lua.B2S(ev.Byte()) }
@@ -15,8 +16,9 @@ func (ev *Event) AssertFunction() (*lua.LFunction, bool) { return nil, false }
 func (ev *Event) Peek() lua.LValue                       { return ev }
 
 func (ev *Event) Byte() []byte {
-	ev.MinionID = xEnv.ID()
+	ev.OS = runtime.GOOS
 	ev.Inet = xEnv.Inet()
+	ev.MinionID = xEnv.ID()
 	chunk, err := json.Marshal(ev)
 	if err != nil {
 		return nil
@@ -47,6 +49,12 @@ func (ev *Event) riskL(L *lua.LState) int {
 
 func (ev *Event) Index(L *lua.LState, key string) lua.LValue {
 	switch key {
+	case "os":
+		return lua.S2L(runtime.GOOS)
+	case "minion_ip", "ip":
+		return lua.S2L(xEnv.Inet())
+	case "minion_id":
+		return lua.S2L(xEnv.ID())
 	case "user":
 		return lua.S2L(ev.User)
 	case "addr":

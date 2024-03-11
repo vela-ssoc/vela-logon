@@ -6,6 +6,7 @@ import (
 	risk "github.com/vela-ssoc/vela-risk"
 	vtime "github.com/vela-ssoc/vela-time"
 	"runtime"
+	"strings"
 )
 
 func (ev *Event) String() string                         { return lua.B2S(ev.Byte()) }
@@ -75,6 +76,15 @@ func (ev *Event) Index(L *lua.LState, key string) lua.LValue {
 		return lua.NewFunction(ev.riskL)
 	case "report":
 		return lua.NewFunction(ev.reportL)
+	default:
+		if strings.HasPrefix(key, "exdata_") {
+			value, ok := ev.Exdata[strings.TrimPrefix(key, "exdata_")].(string)
+			if ok {
+				return lua.S2L(value)
+			} else {
+				return lua.LNil
+			}
+		}
 	}
 
 	return lua.LNil

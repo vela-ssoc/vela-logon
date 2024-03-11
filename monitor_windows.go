@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/auxlib"
+	"github.com/vela-ssoc/vela-kit/hashmap"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
 	"github.com/vela-ssoc/vela-kit/windows/evtx"
 	"gopkg.in/tomb.v2"
 	"reflect"
+	"strconv"
+	"strings"
 	"sync/atomic"
 )
 
@@ -112,6 +115,48 @@ func (m *Monitor) toLogonEvent(evt *evtx.WinLogEvent) *Event {
 		xEnv.Errorf("%s convert to event data fail %v", m.Name(), err)
 		return nil
 	}
+	exdata := make(hashmap.HMap)
+	for _, v := range v.EvData.Data {
+		switch v.Name {
+		case "LogonType":
+			value, ok := logonTypes[v.Text]
+			if ok {
+				exdata[v.Name] = value
+			} else {
+				exdata[v.Name] = v.Text
+			}
+		case "Status":
+			value, ok := logonFailureStatus[v.Text]
+			if ok {
+				exdata[v.Name] = value
+			} else {
+				exdata[v.Name] = v.Text
+			}
+		case "SubStatus":
+			value, ok := logonFailureStatus[v.Text]
+			if ok {
+				exdata[v.Name] = value
+			} else {
+				exdata[v.Name] = v.Text
+			}
+		case "FailureReason":
+			failureReasonID := strings.ReplaceAll(v.Text, "%%", "")
+			value, ok := msobjsMessageTable[failureReasonID]
+			if ok {
+				exdata[v.Name] = value
+			} else {
+				exdata[v.Name] = v.Text
+			}
+		case "ProcessId":
+			i, err := strconv.ParseInt(v.Text, 16, 64)
+			if err != nil {
+				exdata[v.Name] = -1
+			}
+			exdata[v.Name] = i
+		default:
+			exdata[v.Name] = v.Text
+		}
+	}
 
 	return &Event{
 		MinionID: xEnv.ID(),
@@ -124,6 +169,7 @@ func (m *Monitor) toLogonEvent(evt *evtx.WinLogEvent) *Event {
 		Host:     evt.ComputerName,
 		Pid:      int32(evt.ProcessId),
 		Process:  v.Have("ProcessName"),
+		Exdata:   exdata,
 	}
 }
 

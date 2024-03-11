@@ -2,7 +2,7 @@ package logon
 
 import (
 	"github.com/vela-ssoc/vela-kit/hashmap"
-	"github.com/vela-ssoc/vela-process"
+	process "github.com/vela-ssoc/vela-process"
 	"time"
 )
 

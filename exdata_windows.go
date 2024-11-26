@@ -1,5 +1,54 @@
 package logon
 
+import (
+	"github.com/vela-ssoc/vela-kit/hashmap"
+	"github.com/vela-ssoc/vela-kit/windows/evtx"
+	"strconv"
+	"strings"
+)
+
+func ProcessLogonExdata(e *evtx.XmlEvent) hashmap.HMap {
+	exdata := make(hashmap.HMap)
+	for _, v := range e.EvData.Data {
+		switch v.Name {
+		case "LogonType":
+			value, ok := logonTypes[v.Text]
+			if ok {
+				exdata[v.Name+"Text"] = value
+			}
+			exdata[v.Name] = v.Text
+		case "Status":
+			value, ok := logonFailureStatus[v.Text]
+			if ok {
+				exdata[v.Name+"Text"] = value
+			}
+			exdata[v.Name] = v.Text
+		case "SubStatus":
+			value, ok := logonFailureStatus[v.Text]
+			if ok {
+				exdata[v.Name+"Text"] = value
+			}
+			exdata[v.Name] = v.Text
+		case "FailureReason":
+			failureReasonID := strings.ReplaceAll(v.Text, "%%", "")
+			value, ok := msobjsMessageTable[failureReasonID]
+			if ok {
+				exdata[v.Name+"Text"] = value
+			}
+			exdata[v.Name] = v.Text
+		case "ProcessId":
+			i, err := strconv.ParseInt(v.Text, 16, 64)
+			if err != nil {
+				exdata[v.Name] = -1
+			}
+			exdata[v.Name] = i
+		default:
+			exdata[v.Name] = v.Text
+		}
+	}
+	return exdata
+}
+
 var logonTypes = map[string]string{
 	"2":  "Interactive",
 	"3":  "Network",

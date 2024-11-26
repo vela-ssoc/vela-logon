@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"github.com/vela-ssoc/vela-kit/audit"
 	"github.com/vela-ssoc/vela-kit/auxlib"
-	"github.com/vela-ssoc/vela-kit/hashmap"
 	"github.com/vela-ssoc/vela-kit/lua"
 	"github.com/vela-ssoc/vela-kit/pipe"
 	"github.com/vela-ssoc/vela-kit/windows/evtx"
 	"gopkg.in/tomb.v2"
 	"reflect"
-	"strconv"
-	"strings"
 	"sync/atomic"
 )
 
@@ -28,27 +25,6 @@ type Monitor struct {
 	tomb    *tomb.Tomb
 	watch   *evtx.WinLogWatcher
 	history *evtx.WinLogWatcher
-}
-
-func Logon2Event(evt *evtx.WinLogEvent) *Event {
-	v, err := evt.EvData()
-	if err != nil {
-		xEnv.Errorf("%s convert to event data fail %v", err)
-		return nil
-	}
-
-	return &Event{
-		RecordID: evt.RecordId,
-		MinionID: xEnv.ID(),
-		Inet:     xEnv.Inet(),
-		Time:     evt.Created,
-		Addr:     v.Have("IpAddress"),
-		User:     v.Have("TargetUserName"),
-		Device:   v.Have("TargetDomainName"),
-		Host:     evt.ComputerName,
-		Pid:      int32(evt.ProcessId),
-		Process:  v.Have("ProcessName"),
-	}
 }
 
 func (m *Monitor) historyHandle(ev *Event, pip *pipe.Chains) {
@@ -85,10 +61,11 @@ func (m *Monitor) subscribe(name, query string) (err error) {
 		return
 	}
 
-	audit.NewEvent("vela-logon-record").
-		Subject("%s last bookmark", name).
-		From(m.cfg.co.CodeVM()).
-		Msg("%s", bookmark).Log().Put()
+	//audit.NewEvent("vela-logon-record").
+	//	Subject("%s last bookmark", name).
+	//	From(m.cfg.co.CodeVM()).
+	//	Msg("%s", bookmark).Log().Put()
+	xEnv.Infof("vela-logon-record %s 事件订阅开始, 本地Bucket缓存事件偏移数据:%s", name, bookmark)
 
 	err = m.watch.SubscribeFromBookmark(name, query, auxlib.B2S(bookmark))
 	return
@@ -115,62 +92,21 @@ func (m *Monitor) toLogonEvent(evt *evtx.WinLogEvent) *Event {
 		xEnv.Errorf("%s convert to event data fail %v", m.Name(), err)
 		return nil
 	}
-	exdata := make(hashmap.HMap)
-	for _, v := range v.EvData.Data {
-		switch v.Name {
-		case "LogonType":
-			value, ok := logonTypes[v.Text]
-			if ok {
-				exdata[v.Name] = value
-			} else {
-				exdata[v.Name] = v.Text
-			}
-		case "Status":
-			value, ok := logonFailureStatus[v.Text]
-			if ok {
-				exdata[v.Name] = value
-			} else {
-				exdata[v.Name] = v.Text
-			}
-		case "SubStatus":
-			value, ok := logonFailureStatus[v.Text]
-			if ok {
-				exdata[v.Name] = value
-			} else {
-				exdata[v.Name] = v.Text
-			}
-		case "FailureReason":
-			failureReasonID := strings.ReplaceAll(v.Text, "%%", "")
-			value, ok := msobjsMessageTable[failureReasonID]
-			if ok {
-				exdata[v.Name] = value
-			} else {
-				exdata[v.Name] = v.Text
-			}
-		case "ProcessId":
-			i, err := strconv.ParseInt(v.Text, 16, 64)
-			if err != nil {
-				exdata[v.Name] = -1
-			}
-			exdata[v.Name] = i
-		default:
-			exdata[v.Name] = v.Text
-		}
-	}
-
-	return &Event{
+	exdata := ProcessLogonExdata(&v)
+	ev := &Event{
 		MinionID: xEnv.ID(),
 		Inet:     xEnv.Inet(),
 		Class:    m.cfg.class,
 		Time:     evt.Created,
-		Addr:     v.IP(),
-		User:     v.Have("TargetUserName"),
-		Device:   v.Have("TargetDomainName"),
 		Host:     evt.ComputerName,
 		Pid:      int32(evt.ProcessId),
-		Process:  v.Have("ProcessName"),
 		Exdata:   exdata,
 	}
+	ev.Addr = ev.GetExdataString("IpAddress")
+	ev.Device = ev.GetExdataString("TargetDomainName")
+	ev.Process = ev.GetExdataString("ProcessName")
+	ev.User = ev.GetExdataString("TargetUserName")
+	return ev
 }
 
 func (m *Monitor) accept() {

@@ -78,12 +78,8 @@ func (ev *Event) Index(L *lua.LState, key string) lua.LValue {
 		return lua.NewFunction(ev.reportL)
 	default:
 		if strings.HasPrefix(key, "exdata_") {
-			value, ok := ev.Exdata[strings.TrimPrefix(key, "exdata_")].(string)
-			if ok {
-				return lua.S2L(value)
-			} else {
-				return lua.LNil
-			}
+			value := ev.GetExdataAny(strings.TrimPrefix(key, "exdata_"))
+			return lua.ToLValue(value)
 		}
 	}
 

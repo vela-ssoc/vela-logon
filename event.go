@@ -40,3 +40,27 @@ func (ev *Event) ref() {
 	}
 	ev.Process = p.Executable
 }
+
+func (ev *Event) GetExdataString(key string) string {
+	value, ok := ev.Exdata[key].(string)
+	if !ok {
+		return ""
+	}
+	return value
+}
+
+func (ev *Event) GetExdataInt(key string) int64 {
+	value, ok := ev.Exdata[key].(int64)
+	if !ok {
+		return 0
+	}
+	return value
+}
+
+func (ev *Event) GetExdataAny(key string) interface{} {
+	value, ok := ev.Exdata[key]
+	if !ok {
+		return nil
+	}
+	return value
+}
